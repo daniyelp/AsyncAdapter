@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/asyncFragment">
+
+    <fragment
+        android:id="@+id/asyncFragment"
+        android:name="com.example.asynclayoutinflater.async.AsyncFragment"
+        android:label="Async" />
+    <fragment
+        android:id="@+id/syncFragment"
+        android:name="com.example.asynclayoutinflater.sync.SyncFragment"
+        android:label="Sync" />
+</navigation>
