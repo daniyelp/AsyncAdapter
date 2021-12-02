@@ -8,14 +8,14 @@ import kotlinx.coroutines.*
 
 class CustomAdapter(
     private val items: MutableList<String>,
-    private val onClick: (String) -> Unit,
+    private val onItemClick: (String) -> Unit,
     var onUndoDeleteStarted: (()-> Unit) -> Unit,
     var delayUpdate: Long = 0L,
     var delayBetweenItems: Long = 0L,
-    var createAnimation: () -> Animation? = { null }
+    var onCreateAnimation: () -> Animation? = { null }
     ): RecyclerView.Adapter<CustomAdapter.ViewHolder>() {
 
-    fun resetNumberOfBindings() {
+    private fun resetNumberOfBindings() {
         numberOfBindingsYet = 0
     }
 
@@ -65,10 +65,10 @@ class CustomAdapter(
         return ViewHolder(view)
     }
 
-    var numberOfBindingsYet = 0
+    private var numberOfBindingsYet = 0
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        val ride = items[position]
-        holder.bind(ride, { onClick(ride) }, { position -> deleteItem(position) }, delayBetweenItems * numberOfBindingsYet, createAnimation())
+        val item = items[position]
+        holder.bind(item, { onItemClick(item) }, { position -> deleteItem(position) }, delayBetweenItems * numberOfBindingsYet, onCreateAnimation())
         numberOfBindingsYet++
     }
 
@@ -122,8 +122,8 @@ class CustomAdapter(
         }
     }
 
-    private fun undoDelete(ride: String, position: Int) {
-        items.add(position, ride)
+    private fun undoDelete(item: String, position: Int) {
+        items.add(position, item)
         notifyItemInserted(position)
     }
 

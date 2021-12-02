@@ -5,7 +5,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <com.google.android.material.card.MaterialCardView
-        android:id="@+id/ride_card"
+        android:id="@+id/example_card"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_margin="8dp"
@@ -13,7 +13,7 @@
         app:cardCornerRadius="8dp">
 
         <ru.rambler.libs.swipe_layout.SwipeLayout
-            android:id="@+id/ride_swipe_layout"
+            android:id="@+id/example_swipe_layout"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             app:left_swipe_enabled="false"
@@ -26,7 +26,7 @@
                 android:background="?colorSurface">
 
                 <ImageView
-                    android:id="@+id/ride_image"
+                    android:id="@+id/example_image"
                     android:layout_width="100dp"
                     android:layout_height="100dp"
                     android:scaleType="fitCenter"
@@ -37,7 +37,7 @@
                     app:layout_constraintStart_toStartOf="parent"/>
 
                 <TextView
-                    android:id="@+id/ride_text_date_place"
+                    android:id="@+id/example_text_1"
                     android:layout_width="wrap_content"
                     android:textColor="?colorOnSurface"
                     android:alpha="0.87"
@@ -45,49 +45,24 @@
                     android:textSize="20dp"
                     android:layout_height="wrap_content"
                     app:layout_constraintTop_toTopOf="parent"
-                    app:layout_constraintStart_toEndOf="@id/ride_image"/>
+                    app:layout_constraintStart_toEndOf="@id/example_image"/>
 
                 <TextView
-                    android:id="@+id/ride_text_places"
+                    android:id="@+id/example_text_2"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:textColor="?colorOnSurface"
                     android:alpha="0.60"
                     android:text="Berlin, Montreal"
-                    app:layout_constraintTop_toBottomOf="@id/ride_text_date_place"
-                    app:layout_constraintStart_toEndOf="@id/ride_image"/>
+                    app:layout_constraintTop_toBottomOf="@id/example_text_1"
+                    app:layout_constraintStart_toEndOf="@id/example_image"/>
 
                 <LinearLayout
                     android:orientation="horizontal"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    app:layout_constraintTop_toBottomOf="@id/ride_text_places"
-                    app:layout_constraintStart_toEndOf="@id/ride_image">
-
-                    <!--
-                    <ImageView
-                        android:src="@drawable/ic_timer"
-                        android:tint="?colorOnSurface"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"/>
-
-                    <TextView
-                        android:id="@+id/ride_text_duration"
-                        android:text="40"
-                        android:textColor="?colorOnSurface"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"/>
-
-                    <TextView
-                        android:text="min"
-                        android:textColor="?colorOnSurface"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"/>
-
-                    <Space
-                        android:layout_width="5dp"
-                        android:layout_height="wrap_content"/>
-                    -->
+                    app:layout_constraintTop_toBottomOf="@id/example_text_2"
+                    app:layout_constraintStart_toEndOf="@id/example_image">
 
                     <ImageView
                         android:src="@drawable/ic_moving"
@@ -97,7 +72,7 @@
                         android:layout_height="wrap_content"/>
 
                     <TextView
-                        android:id="@+id/ride_text_distance"
+                        android:id="@+id/example_text_distance"
                         android:text="12 "
                         android:textColor="?colorOnSurface"
                         android:alpha="0.87"
@@ -125,7 +100,7 @@
                         android:layout_height="wrap_content"/>
 
                     <TextView
-                        android:id="@+id/ride_text_avg_speed"
+                        android:id="@+id/example_text_avg_speed"
                         android:text=" 12 "
                         android:textColor="?colorOnSurface"
                         android:alpha="0.87"
@@ -144,7 +119,7 @@
                 </LinearLayout>
 
                 <ImageView
-                    android:id="@+id/ride_menu_more"
+                    android:id="@+id/example_menu_more"
                     android:src="@drawable/ic_more"
                     android:tint="?colorOnSurface"
                     android:padding="8dp"
@@ -165,7 +140,7 @@
                 android:background="@color/colorError">
 
                 <ImageView
-                    android:id="@+id/ride_delete_icon"
+                    android:id="@+id/example_delete_icon"
                     android:layout_width="60dp"
                     android:layout_height="60dp"
                     android:layout_marginStart="16dp"

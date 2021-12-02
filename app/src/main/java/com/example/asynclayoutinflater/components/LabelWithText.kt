@@ -11,7 +11,6 @@ import androidx.compose.material.LocalTextStyle
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.SolidColor
@@ -23,12 +22,12 @@ import androidx.compose.ui.unit.dp
 fun LabelWithText(
     modifier: Modifier = Modifier,
     label: String,
-    text: MutableState<String>,
+    text: String,
+    onTextChange: (String) -> Unit,
     keyboardOptions: KeyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
     singleLine: Boolean = true,
     textHeight: Dp = 45.dp,
     textWidth: Dp = 60.dp,
-    afterValueChange: () -> Unit = {}
 ) {
     Row(modifier = modifier) {
 
@@ -40,8 +39,8 @@ fun LabelWithText(
             modifier = Modifier
                 .size(textWidth, textHeight)
                 .border(2.dp, MaterialTheme.colors.primary, RoundedCornerShape(8.dp)),
-            value = text.value,
-            onValueChange = { text.value = it; afterValueChange() },
+            value = text,
+            onValueChange = onTextChange,
             keyboardOptions = keyboardOptions,
             cursorBrush = SolidColor(MaterialTheme.colors.primary),
             singleLine = singleLine,

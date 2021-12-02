@@ -64,7 +64,6 @@ private val dummyItems = mutableListOf(
     "lorem ipsum dolor sit amet",
     "consectetur adipiscing elit",
     "duis eget consequat eros",
-    "sed facilisis sollicitudin dolor sit",
     "Lorem ipsum dolor sit amet",
     "consectetur adipiscing elit",
     "pellentesque in volutpat nec",
@@ -74,7 +73,7 @@ private val actualItems = mutableListOf<String>()
 
 private val customAdapter: CustomAdapter = CustomAdapter(
     items = actualItems,
-    onClick = { },
+    onItemClick = { },
     onUndoDeleteStarted = { undoAction -> showSnackbar(
         snackState.value,
         "Ride deleted",
@@ -84,7 +83,7 @@ private val customAdapter: CustomAdapter = CustomAdapter(
     )},
     delayUpdate = 500L,
     delayBetweenItems = 300L,
-    createAnimation = { AlphaAnimation(0f, 1f).apply { duration = 300; }}
+    onCreateAnimation = { AlphaAnimation(0f, 1f).apply { duration = 300; }}
 )
 
 private val optionsAdd = listOf(1, 2, 3, 4, 5)
@@ -129,94 +128,14 @@ private fun remove() {
 @ExperimentalMaterialApi
 @Composable
 fun Screen() {
-    var moreOptionsExpanded by remember { mutableStateOf(false) }
-    val moreArrowRotationState by animateFloatAsState(
-        targetValue = if(moreOptionsExpanded) 180f else 0f
-    )
     Column(modifier = Modifier.fillMaxWidth()) {
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(8.dp)
-                .animateContentSize(
-                    animationSpec = tween(
-                        durationMillis = 400,
-                        easing = LinearOutSlowInEasing
-                    )
-                )
-        ) {
-            Column {
-                Row {
-                    CustomButton(
-                        modifier = Modifier
-                            .padding(8.dp)
-                            .width(80.dp),
-                        onClick = {
-                            recyclerVisible.value = !recyclerVisible.value
-                            toggleButtonText.value = if(toggleButtonText.value == "Show") "Hide" else "Show"
-                        },
-                        text = toggleButtonText
-                    )
-                    Button(
-                        modifier = Modifier.padding(8.dp),
-                        onClick = { add() }
-                    ) {
-                        Icon(imageVector = Icons.Default.Add, contentDescription = "")
-                    }
-                    Button(
-                        modifier = Modifier.padding(8.dp),
-                        onClick = { remove() }
-                    ) {
-                        Icon(imageVector = Icons.Default.Remove, contentDescription = "")
-                    }
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.End
-                    ) {
-                        IconButton(
-                            modifier = Modifier
-                                .padding(8.dp)
-                                .rotate(moreArrowRotationState),
-                            onClick = { moreOptionsExpanded = !moreOptionsExpanded }
-                        ) {
-                            Icon(imageVector = Icons.Default.ArrowDropDown, contentDescription = "")
-                        }
-                    }
-                }
-                if (moreOptionsExpanded) {
-                    Column {
-                        LabelWithDropDownMenu(
-                            modifier = Modifier.padding(8.dp),
-                            label = "Additions",
-                            options = optionsAdd,
-                            selectedOption = selectedOptionAdd,
-                        )
-                        LabelWithDropDownMenu(
-                            modifier = Modifier.padding(8.dp),
-                            label = "Deletions",
-                            options = optionsDel,
-                            selectedOption = selectedOptionDel,
-                        )
-                        LabelWithText(
-                            modifier = Modifier.padding(8.dp),
-                            label = "Initial delay",
-                            text = initialDelayText,
-                            afterValueChange = { onOptionsChanged()}
-                        )
-                        LabelWithText(
-                            modifier = Modifier.padding(8.dp),
-                            label = "Between delay",
-                            text = betweenDelayText,
-                            afterValueChange = { onOptionsChanged()}
-                        )
-                    }
-                }
-            }
-        }
+        ControlPanelCard()
         Box {
-            Items(recyclerVisible)
+            Items()
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-                ProgressBar(progressBarVisible)
+                if(progressBarVisible.value) {
+                    CircularProgressIndicator()
+                }
             }
             CustomSnackbar(
                 Modifier
@@ -228,9 +147,109 @@ fun Screen() {
     }
 }
 
+@ExperimentalMaterialApi
 @Composable
-fun Items(visible: MutableState<Boolean>) {
-    if(visible.value) {
+private fun ControlPanelCard() {
+    var moreOptionsExpanded by remember { mutableStateOf(false) }
+    val moreArrowRotationState by animateFloatAsState(
+        targetValue = if(moreOptionsExpanded) 180f else 0f
+    )
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(8.dp)
+            .animateContentSize(
+                animationSpec = tween(
+                    durationMillis = 400,
+                    easing = LinearOutSlowInEasing
+                )
+            )
+    ) {
+        Column {
+            Row {
+                Button(
+                    modifier = Modifier
+                        .padding(8.dp)
+                        .width(80.dp),
+                    onClick = {
+                        recyclerVisible.value = !recyclerVisible.value
+                        toggleButtonText.value = if(toggleButtonText.value == "Show") "Hide" else "Show"
+                    }
+                ) {
+                    Text(toggleButtonText.value)
+                }
+                Button(
+                    modifier = Modifier.padding(8.dp),
+                    onClick = ::add
+                ) {
+                    Icon(imageVector = Icons.Default.Add, contentDescription = "")
+                }
+                Button(
+                    modifier = Modifier.padding(8.dp),
+                    onClick = ::remove
+                ) {
+                    Icon(imageVector = Icons.Default.Remove, contentDescription = "")
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    IconButton(
+                        modifier = Modifier
+                            .padding(8.dp)
+                            .rotate(moreArrowRotationState),
+                        onClick = { moreOptionsExpanded = !moreOptionsExpanded }
+                    ) {
+                        Icon(imageVector = Icons.Default.ArrowDropDown, contentDescription = "")
+                    }
+                }
+            }
+            if (moreOptionsExpanded) {
+                Column {
+                    LabelWithDropDownMenu(
+                        modifier = Modifier.padding(8.dp),
+                        label = "Additions",
+                        options = optionsAdd,
+                        selectedOption = selectedOptionAdd.value,
+                        onSelectedOptionChange = {
+                            selectedOptionAdd.value = it
+                        }
+                    )
+                    LabelWithDropDownMenu(
+                        modifier = Modifier.padding(8.dp),
+                        label = "Deletions",
+                        options = optionsDel,
+                        selectedOption = selectedOptionDel.value,
+                        onSelectedOptionChange = {
+                            selectedOptionDel.value = it
+                        }
+                    )
+                    LabelWithText(
+                        modifier = Modifier.padding(8.dp),
+                        label = "Initial delay",
+                        text = initialDelayText.value,
+                        onTextChange = {
+                            initialDelayText.value = it
+                            onOptionsChanged()
+                        }
+                    )
+                    LabelWithText(
+                        modifier = Modifier.padding(8.dp),
+                        label = "Between delay",
+                        text = betweenDelayText.value,
+                        onTextChange = {
+                            betweenDelayText.value = it
+                            onOptionsChanged()
+                        }
+                    )
+                }
+            }
+        }
+    }
+}
+@Composable
+fun Items() {
+    if(recyclerVisible.value) {
         AndroidView(
             modifier = Modifier.fillMaxSize(),
             factory = { context ->

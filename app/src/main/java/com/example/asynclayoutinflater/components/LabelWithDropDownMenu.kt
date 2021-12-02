@@ -20,8 +20,8 @@ fun <T> LabelWithDropDownMenu(
     modifier: Modifier = Modifier,
     label: String,
     options: List<T>,
-    selectedOption: MutableState<T>,
-    afterValueChange: () -> Unit = {}
+    selectedOption: T,
+    onSelectedOptionChange: (T) -> Unit
 ) {
     Row(modifier = modifier) {
         var expanded by remember { mutableStateOf(false) }
@@ -42,7 +42,7 @@ fun <T> LabelWithDropDownMenu(
                     modifier = Modifier
                         .padding(8.dp)
                         .weight(1F),
-                    text = selectedOption.value.toString()
+                    text = selectedOption.toString()
                 )
                 Icon(
                     modifier = Modifier
@@ -62,8 +62,7 @@ fun <T> LabelWithDropDownMenu(
                 options.forEach {
                     DropdownMenuItem(
                         onClick = {
-                            selectedOption.value = it
-                            afterValueChange()
+                            onSelectedOptionChange(it)
                             expanded = false
                         }
                     ) {
