@@ -1,5 +1,6 @@
 package com.example.asynclayoutinflater
 
+import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import android.view.animation.Animation
@@ -53,15 +54,13 @@ class CustomAdapter(
         })
     }
     class ViewHolder(private val view: View): RecyclerView.ViewHolder(view) {
-
         fun bind(str: String, onClick: () -> Unit, onDeleteClick: (Int) -> Unit, asyncInflateDelay: Long, inflateAnimation: Animation?) {
             (view as ItemView).bind(str, onClick, { onDeleteClick(adapterPosition) }, asyncInflateDelay, inflateAnimation)
         }
-
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        val view = ItemView(parent.context, {waitForItem()}, {itemReady()})
+        val view = ItemView(parent.context, ::waitForItem, ::itemReady)
         return ViewHolder(view)
     }
 
@@ -82,7 +81,7 @@ class CustomAdapter(
     private var allItemsReadyJob = Job()
     private var syncInflationsFinished = false
 
-    private fun resetInfo() {
+    private fun resetState() {
         itemsToWaitFor = 0
         itemsReady = 0
         onAllItemsReady = {}
@@ -103,6 +102,7 @@ class CustomAdapter(
 
     private fun itemReady() {
         itemsReady++
+        Log.d("INFLATION", "items ready ${itemsReady} but need ${itemsToWaitFor}")
         if(syncInflationsFinished) {
             if(itemsToWaitFor == itemsReady) {
                 allItemsReadyJob.complete()
@@ -110,12 +110,12 @@ class CustomAdapter(
         }
     }
 
-    fun updateData(rides: List<String>, onUpdateFinished: () -> Unit) {
+    fun updateData(items: List<String>, onUpdateFinished: () -> Unit) {
         CoroutineScope(Dispatchers.Main).launch {
             delay(delayUpdate)
-            resetInfo()
+            resetState()
             this@CustomAdapter.items.clear()
-            this@CustomAdapter.items.addAll(rides)
+            this@CustomAdapter.items.addAll(items)
             notifyDataSetChanged()
             allItemsReadyJob.join()
             onUpdateFinished()

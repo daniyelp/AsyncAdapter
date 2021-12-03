@@ -29,6 +29,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.asynclayoutinflater.CustomAdapter
 import com.example.asynclayoutinflater.components.*
 import com.example.asynclayoutinflater.ui.theme.AsyncLayoutInflaterTheme
+import java.lang.Exception
 import java.lang.NumberFormatException
 import kotlin.random.Random
 
@@ -71,21 +72,6 @@ private val dummyItems = mutableListOf(
 
 private val actualItems = mutableListOf<String>()
 
-private val customAdapter: CustomAdapter = CustomAdapter(
-    items = actualItems,
-    onItemClick = { },
-    onUndoDeleteStarted = { undoAction -> showSnackbar(
-        snackState.value,
-        "Ride deleted",
-        "Undo",
-        { undoAction() },
-        {}
-    )},
-    delayUpdate = 500L,
-    delayBetweenItems = 300L,
-    onCreateAnimation = { AlphaAnimation(0f, 1f).apply { duration = 300; }}
-)
-
 private val optionsAdd = listOf(1, 2, 3, 4, 5)
 private val selectedOptionAdd = mutableStateOf(optionsAdd[0])
 
@@ -95,15 +81,22 @@ private val selectedOptionDel = mutableStateOf(optionsDel[0])
 private var initialDelayText = mutableStateOf("500")
 private var betweenDelayText = mutableStateOf("200")
 
-private fun onOptionsChanged() {
-    try {
-        customAdapter.delayUpdate = initialDelayText.value.toLong()
-        customAdapter.delayBetweenItems = betweenDelayText.value.toLong()
-    } catch (ex: NumberFormatException) {
-        customAdapter.delayUpdate = 0L
-        customAdapter.delayBetweenItems = 0L
-    }
-}
+private var customAdapter: CustomAdapter = getNewCustomAdapter()
+
+private fun getNewCustomAdapter() = CustomAdapter(
+    items = actualItems,
+    onItemClick = { },
+    onUndoDeleteStarted = { undoAction -> showSnackbar(
+        snackState.value,
+        "Ride deleted",
+        "Undo",
+        { undoAction() },
+        {}
+    )},
+    delayUpdate = initialDelayText.value.toLong(),
+    delayBetweenItems = betweenDelayText.value.toLong(),
+    onCreateAnimation = { AlphaAnimation(0f, 1f).apply { duration = 300; }}
+)
 
 private fun add() {
     val numberOfItemsToAdd = selectedOptionAdd.value
@@ -230,7 +223,11 @@ private fun ControlPanelCard() {
                         text = initialDelayText.value,
                         onTextChange = {
                             initialDelayText.value = it
-                            onOptionsChanged()
+                            customAdapter.delayUpdate = try {
+                                it.toLong()
+                            } catch (e: Exception) {
+                                0L
+                            }
                         }
                     )
                     LabelWithText(
@@ -239,7 +236,11 @@ private fun ControlPanelCard() {
                         text = betweenDelayText.value,
                         onTextChange = {
                             betweenDelayText.value = it
-                            onOptionsChanged()
+                            customAdapter.delayBetweenItems = try {
+                                it.toLong()
+                            } catch (e: Exception) {
+                                0L
+                            }
                         }
                     )
                 }
@@ -270,7 +271,7 @@ fun Items() {
                 it.apply {
                     itemAnimator = DefaultItemAnimator()
                     adapter = customAdapter
-                    setHasFixedSize(true)
+                    //setHasFixedSize(true)
                     progressBarVisible.value = true
                     customAdapter.updateData(dummyItems) {
                         progressBarVisible.value = false
