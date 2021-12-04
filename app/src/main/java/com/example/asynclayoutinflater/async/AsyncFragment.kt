@@ -26,11 +26,15 @@ import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.example.asynclayoutinflater.CustomAdapter
+import com.example.asynclayoutinflater.AsyncAdapter
+import com.example.asynclayoutinflater.ItemView
 import com.example.asynclayoutinflater.components.*
 import com.example.asynclayoutinflater.ui.theme.AsyncLayoutInflaterTheme
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.lang.Exception
-import java.lang.NumberFormatException
 import kotlin.random.Random
 
 class AsyncFragment: Fragment() {
@@ -81,30 +85,30 @@ private val selectedOptionDel = mutableStateOf(optionsDel[0])
 private var initialDelayText = mutableStateOf("500")
 private var betweenDelayText = mutableStateOf("200")
 
-private var customAdapter: CustomAdapter = getNewCustomAdapter()
-
-private fun getNewCustomAdapter() = CustomAdapter(
+private val asyncAdapter: AsyncAdapter<String > = AsyncAdapter(
     items = actualItems,
     onItemClick = { },
     onUndoDeleteStarted = { undoAction -> showSnackbar(
         snackState.value,
-        "Ride deleted",
+        "Item deleted",
         "Undo",
         { undoAction() },
         {}
     )},
-    delayUpdate = initialDelayText.value.toLong(),
-    delayBetweenItems = betweenDelayText.value.toLong(),
-    onCreateAnimation = { AlphaAnimation(0f, 1f).apply { duration = 300; }}
+    betweenItemsInflateDelay = betweenDelayText.value.toLong(),
+    buildInflateAnimation = { AlphaAnimation(0f, 1f).apply { duration = 300; }},
+    buildAsyncItem = { context, onSyncInflationFinished, onDisplayFinished ->
+        ItemView(context, onSyncInflationFinished, onDisplayFinished)
+    }
 )
 
 private fun add() {
     val numberOfItemsToAdd = selectedOptionAdd.value
     repeat(numberOfItemsToAdd) {
         val positionToAdd = minOf(Random.nextInt(0, 6), maxOf(actualItems.size - 1, 0))
-        val ride = dummyItems[0]
-        actualItems.add(positionToAdd, ride)
-        customAdapter.notifyItemInserted(positionToAdd)
+        val item = dummyItems[0]
+        actualItems.add(positionToAdd, item)
+        asyncAdapter.notifyItemInserted(positionToAdd)
     }
 }
 
@@ -114,7 +118,7 @@ private fun remove() {
         if(actualItems.isEmpty()) return
         val positionToDelete = minOf(Random.nextInt(0, 6), actualItems.size - 1)
         actualItems.removeAt(positionToDelete)
-        customAdapter.notifyItemRemoved(positionToDelete)
+        asyncAdapter.notifyItemRemoved(positionToDelete)
     }
 }
 
@@ -223,11 +227,6 @@ private fun ControlPanelCard() {
                         text = initialDelayText.value,
                         onTextChange = {
                             initialDelayText.value = it
-                            customAdapter.delayUpdate = try {
-                                it.toLong()
-                            } catch (e: Exception) {
-                                0L
-                            }
                         }
                     )
                     LabelWithText(
@@ -236,7 +235,7 @@ private fun ControlPanelCard() {
                         text = betweenDelayText.value,
                         onTextChange = {
                             betweenDelayText.value = it
-                            customAdapter.delayBetweenItems = try {
+                            asyncAdapter.betweenItemsInflateDelay = try {
                                 it.toLong()
                             } catch (e: Exception) {
                                 0L
@@ -262,7 +261,7 @@ fun Items() {
                             val lastVisibleItemPosition = findLastVisibleItemPosition()
                             if(firstVisibleItemPosition == -1 || lastVisibleItemPosition == -1)
                                 return
-                            customAdapter.onSyncInflationsFinished()
+                            asyncAdapter.onSyncInflationsFinished()
                         }
                     }
                 }
@@ -270,11 +269,14 @@ fun Items() {
             update = {
                 it.apply {
                     itemAnimator = DefaultItemAnimator()
-                    adapter = customAdapter
+                    adapter = asyncAdapter
                     //setHasFixedSize(true)
                     progressBarVisible.value = true
-                    customAdapter.updateData(dummyItems) {
-                        progressBarVisible.value = false
+                    CoroutineScope(Dispatchers.Main).launch {
+                        delay(try { initialDelayText.value.toLong() } catch (e: Exception) {0L})
+                        asyncAdapter.updateData(dummyItems) {
+                            progressBarVisible.value = false
+                        }
                     }
                 }
             }

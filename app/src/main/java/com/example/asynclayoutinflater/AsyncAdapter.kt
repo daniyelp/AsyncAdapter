@@ -1,20 +1,59 @@
 package com.example.asynclayoutinflater
 
-import android.util.Log
+import android.content.Context
 import android.view.View
 import android.view.ViewGroup
 import android.view.animation.Animation
+import android.widget.FrameLayout
+import androidx.asynclayoutinflater.view.AsyncLayoutInflater
 import androidx.recyclerview.widget.RecyclerView
 import kotlinx.coroutines.*
 
-class CustomAdapter(
-    private val items: MutableList<String>,
-    private val onItemClick: (String) -> Unit,
+class AsyncAdapter<T>(
+    private val items: MutableList<T>,
+    private val onItemClick: (T) -> Unit,
     var onUndoDeleteStarted: (()-> Unit) -> Unit,
-    var delayUpdate: Long = 0L,
-    var delayBetweenItems: Long = 0L,
-    var onCreateAnimation: () -> Animation? = { null }
-    ): RecyclerView.Adapter<CustomAdapter.ViewHolder>() {
+    var betweenItemsInflateDelay: Long = 0L,
+    var buildInflateAnimation: () -> Animation? = { null },
+    private val buildAsyncItem: (
+        context: Context,
+        onSyncInflationFinished: () -> Unit,
+        onDisplayFinished: () -> Unit
+    ) -> AsyncItem<T>
+): RecyclerView.Adapter<AsyncAdapter<T>.ViewHolder>() {
+
+    abstract class AsyncItem<T>(
+        context: Context,
+        val onSyncInflationFinished: () -> Unit,
+        val onDisplayFinished: () -> Unit
+    ): FrameLayout(context) {
+        private var isRealLayoutInflated = false
+        init {
+            inflateView()
+            onSyncInflationFinished()
+        }
+        abstract fun inflateView(): View
+        abstract fun findViews(view: View)
+        abstract fun bindToViews(item: T, onClick: () -> Unit, onDeleteClick: () -> Unit)
+        fun bind(item: T, onClick: () -> Unit, onDeleteClick: () -> Unit, asyncInflateDelay: Long = 0L, inflateAnimation: Animation? = null) {
+            if(isRealLayoutInflated) {
+                bindToViews(item, onClick, onDeleteClick)
+                onDisplayFinished()
+            } else {
+                CoroutineScope(Dispatchers.Main).launch {
+                    delay(asyncInflateDelay)
+                    AsyncLayoutInflater(context).inflate(R.layout.example_view_ready, this@AsyncItem) { view, _, _ ->
+                        findViews(view)
+                        bindToViews(item, onClick, onDeleteClick)
+                        inflateAnimation?.let { view.animation = it }
+                        addView(view)
+                        isRealLayoutInflated = true
+                        onDisplayFinished()
+                    }
+                }
+            }
+        }
+    }
 
     private fun resetNumberOfBindings() {
         numberOfBindingsYet = 0
@@ -53,21 +92,21 @@ class CustomAdapter(
             }
         })
     }
-    class ViewHolder(private val view: View): RecyclerView.ViewHolder(view) {
-        fun bind(str: String, onClick: () -> Unit, onDeleteClick: (Int) -> Unit, asyncInflateDelay: Long, inflateAnimation: Animation?) {
-            (view as ItemView).bind(str, onClick, { onDeleteClick(adapterPosition) }, asyncInflateDelay, inflateAnimation)
+    inner class ViewHolder(private val view: View): RecyclerView.ViewHolder(view) {
+        fun bind(item: T, onClick: () -> Unit, onDeleteClick: (Int) -> Unit, asyncInflateDelay: Long, inflateAnimation: Animation?) {
+            (view as AsyncItem<T>).bind(item, onClick, { onDeleteClick(adapterPosition) }, asyncInflateDelay, inflateAnimation)
         }
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        val view = ItemView(parent.context, ::waitForItem, ::itemReady)
+        val view = buildAsyncItem(parent.context, ::waitForItem, ::itemReady)
         return ViewHolder(view)
     }
 
     private var numberOfBindingsYet = 0
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val item = items[position]
-        holder.bind(item, { onItemClick(item) }, { position -> deleteItem(position) }, delayBetweenItems * numberOfBindingsYet, onCreateAnimation())
+        holder.bind(item, { onItemClick(item) }, { position -> deleteItem(position) }, betweenItemsInflateDelay * numberOfBindingsYet, buildInflateAnimation())
         numberOfBindingsYet++
     }
 
@@ -102,7 +141,6 @@ class CustomAdapter(
 
     private fun itemReady() {
         itemsReady++
-        Log.d("INFLATION", "items ready ${itemsReady} but need ${itemsToWaitFor}")
         if(syncInflationsFinished) {
             if(itemsToWaitFor == itemsReady) {
                 allItemsReadyJob.complete()
@@ -110,19 +148,18 @@ class CustomAdapter(
         }
     }
 
-    fun updateData(items: List<String>, onUpdateFinished: () -> Unit) {
+    fun updateData(items: List<T>, onUpdateFinished: () -> Unit) {
         CoroutineScope(Dispatchers.Main).launch {
-            delay(delayUpdate)
             resetState()
-            this@CustomAdapter.items.clear()
-            this@CustomAdapter.items.addAll(items)
+            this@AsyncAdapter.items.clear()
+            this@AsyncAdapter.items.addAll(items)
             notifyDataSetChanged()
             allItemsReadyJob.join()
             onUpdateFinished()
         }
     }
 
-    private fun undoDelete(item: String, position: Int) {
+    private fun undoDelete(item: T, position: Int) {
         items.add(position, item)
         notifyItemInserted(position)
     }
