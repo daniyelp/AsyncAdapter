@@ -36,13 +36,9 @@ class ItemView(
     context: Context,
     onSyncInflationFinished: () -> Unit,
     onDisplayFinished: () -> Unit
-) : AsyncAdapter.AsyncItem<String>(context, onSyncInflationFinished, onDisplayFinished) {
+) : AsyncAdapter.AsyncItem<String>(context, R.layout.real_layout, onSyncInflationFinished, onDisplayFinished) {
 
     private lateinit var exampleTextView: TextView
-
-    override fun inflateView(): View {
-        return inflate(context, R.layout.example_view, this)
-    }
 
     override fun findViews(view: View) {
         exampleTextView = view.findViewById(R.id.example_text)
