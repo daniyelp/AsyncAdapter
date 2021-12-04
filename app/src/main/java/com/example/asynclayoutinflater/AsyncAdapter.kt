@@ -5,6 +5,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.animation.Animation
 import android.widget.FrameLayout
+import androidx.annotation.LayoutRes
 import androidx.asynclayoutinflater.view.AsyncLayoutInflater
 import androidx.recyclerview.widget.RecyclerView
 import kotlinx.coroutines.*
@@ -24,15 +25,15 @@ class AsyncAdapter<T>(
 
     abstract class AsyncItem<T>(
         context: Context,
+        @LayoutRes val viewToInflate: Int,
         val onSyncInflationFinished: () -> Unit,
         val onDisplayFinished: () -> Unit
     ): FrameLayout(context) {
         private var isRealLayoutInflated = false
         init {
-            inflateView()
+            inflate(context, R.layout.empty_view, this)
             onSyncInflationFinished()
         }
-        abstract fun inflateView(): View
         abstract fun findViews(view: View)
         abstract fun bindToViews(item: T, onClick: () -> Unit, onDeleteClick: () -> Unit)
         fun bind(item: T, onClick: () -> Unit, onDeleteClick: () -> Unit, asyncInflateDelay: Long = 0L, inflateAnimation: Animation? = null) {
@@ -42,7 +43,7 @@ class AsyncAdapter<T>(
             } else {
                 CoroutineScope(Dispatchers.Main).launch {
                     delay(asyncInflateDelay)
-                    AsyncLayoutInflater(context).inflate(R.layout.example_view_ready, this@AsyncItem) { view, _, _ ->
+                    AsyncLayoutInflater(context).inflate(viewToInflate, this@AsyncItem) { view, _, _ ->
                         findViews(view)
                         bindToViews(item, onClick, onDeleteClick)
                         inflateAnimation?.let { view.animation = it }

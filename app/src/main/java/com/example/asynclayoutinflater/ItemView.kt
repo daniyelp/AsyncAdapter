@@ -11,17 +11,13 @@ class ItemView(
     context: Context,
     onSyncInflationFinished: () -> Unit,
     onDisplayFinished: () -> Unit
-) : AsyncAdapter.AsyncItem<String>(context, onSyncInflationFinished, onDisplayFinished) {
+) : AsyncAdapter.AsyncItem<String>(context, R.layout.example_view_ready, onSyncInflationFinished, onDisplayFinished) {
 
     private lateinit var card: MaterialCardView
     private lateinit var swipeLayout: SwipeLayout
     private lateinit var image: ImageView
     private lateinit var firstText: TextView
     private lateinit var moreMenu: ImageView
-
-    override fun inflateView(): View {
-        return inflate(context, R.layout.example_view, this)
-    }
 
     override fun findViews(view: View) {
         card = view.findViewById(R.id.example_card)
